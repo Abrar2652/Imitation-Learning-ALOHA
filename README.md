@@ -1,0 +1,2 @@
+# LeRobot-ALOHA
+Imitation learning
