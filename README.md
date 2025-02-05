@@ -1,2 +1,2 @@
-# LeRobot-ALOHA
+# Imitation-Learning-ALOHA
 Imitation learning
