@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Robot Control Interface</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .controls {
+            width: 400px;
+            flex-shrink: 0;
+        }
+        h2 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .values-header {
+            display: grid;
+            grid-template-columns: 80px 150px 50px 70px;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+            text-align: center;
+            padding: 5px 0;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .values-header > div:first-child {
+            text-align: left;
+            padding-left: 10px;
+        }
+        .slider-container {
+            margin: 5px 0;
+            display: grid;
+            grid-template-columns: 80px 150px 50px 70px;
+            align-items: center;
+            gap: 5px;
+            font-size: 13px;
+            padding: 5px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        .slider-container:hover {
+            background-color: #f8f9fa;
+        }
+        .slider-container label {
+            font-weight: 500;
+            color: #34495e;
+        }
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            background: #ddd;
+            border-radius: 3px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #3498db;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #2980b9;
+        }
+        input[type="number"] {
+            width: 45px;
+            padding: 2px 4px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-family: monospace;
+            text-align: right;
+        }
+        .actual-value {
+            color: #666;
+            font-family: monospace;
+            text-align: right;
+        }
+        .visualization {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .visualization img {
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .reward-display {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .reward-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #27ae60;
+        }
+        .state-controls {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .state-controls h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .state-controls button {
+            display: block;
+            width: 100%;
+            padding: 8px 12px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 4px;
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .state-controls button:hover {
+            background-color: #2980b9;
+        }
+        .state-controls select {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background-color: #2ecc71;
+            color: white;
+            border-radius: 4px;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            pointer-events: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .notification.show {
+            opacity: 1;
+        }
+        button#resetEnv {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            border: none;
+            border-radius: 4px;
+            background-color: #e74c3c;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(231, 76, 60, 0.2);
+        }
+        button#resetEnv:hover {
+            background-color: #c0392b;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
+        }
+        button#resetEnv:active {
+            transform: translateY(1px);
+            box-shadow: 0 1px 2px rgba(231, 76, 60, 0.2);
+        }
+        button#resetEnv::before {
+            content: "↺";  /* Reset icon */
+            margin-right: 8px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="controls">
+            <h2>Joint Controls</h2>
+            <div class="values-header">
+                <div>Joint</div>
+                <div>Position</div>
+                <div>Value</div>
+                <div>Actual</div>
+            </div>
+            <div class="slider-container">
+                <label>Waist:</label>
+                <input type="range" min="-1" max="1" step="0.01" value="0" id="joint0">
+                <input type="number" step="0.01" value="0" id="joint0-input">
+                <span class="actual-value" id="joint0-actual">0.00</span>
+            </div>
+            <div class="slider-container">
+                <label>Shoulder:</label>
+                <input type="range" min="-1" max="1" step="0.01" value="0" id="joint1">
+                <input type="number" step="0.01" value="0" id="joint1-input">
+                <span class="actual-value" id="joint1-actual">0.00</span>
+            </div>
+            <div class="slider-container">
+                <label>Elbow:</label>
+                <input type="range" min="-1" max="1" step="0.01" value="0" id="joint2">
+                <input type="number" step="0.01" value="0" id="joint2-input">
+                <span class="actual-value" id="joint2-actual">0.00</span>
+            </div>
+            <div class="slider-container">
+                <label>Forearm Roll:</label>
+                <input type="range" min="-1" max="1" step="0.01" value="0" id="joint3">
+                <input type="number" step="0.01" value="0" id="joint3-input">
+                <span class="actual-value" id="joint3-actual">0.00</span>
+            </div>
+            <div class="slider-container">
+                <label>Wrist Angle:</label>
+                <input type="range" min="-1" max="1" step="0.01" value="0" id="joint4">
+                <input type="number" step="0.01" value="0" id="joint4-input">
+                <span class="actual-value" id="joint4-actual">0.00</span>
+            </div>
+            <div class="slider-container">
+                <label>Wrist Rotate:</label>
+                <input type="range" min="-1" max="1" step="0.01" value="0" id="joint5">
+                <input type="number" step="0.01" value="0" id="joint5-input">
+                <span class="actual-value" id="joint5-actual">0.00</span>
+            </div>
+            <div class="slider-container">
+                <label>Gripper:</label>
+                <input type="range" min="-1" max="1" step="0.01" value="0" id="joint6">
+                <input type="number" step="0.01" value="0" id="joint6-input">
+                <span class="actual-value" id="joint6-actual">0.00</span>
+            </div>
+            <button id="resetEnv" onclick="resetEnv()">
+                Reset Robot
+            </button>
+            
+            <div class="state-controls">
+                <h3>State Management</h3>
+                <button onclick="saveStateWithName()">Save Current State</button>
+                <select id="stateSelect">
+                    <option value="">Select a saved state...</option>
+                </select>
+                <button onclick="loadState()">Load Selected State</button>
+                <input type="file" id="stateFileInput" accept=".json,.yaml" style="margin-top: 10px;">
+                <button onclick="uploadState()">Upload State File</button>
+            </div>
+        </div>
+        <div class="visualization">
+            <img id="env-render" width="640" height="480">
+            <div class="reward-display">
+                Reward: <span id="reward" class="reward-value">0</span>
+            </div>
+        </div>
+    </div>
+    <div id="notification" class="notification"></div>
+
+    <script>
+        let updateInterval;
+        const sliders = Array.from({length: 7}, (_, i) => document.getElementById(`joint${i}`));
+        const inputs = Array.from({length: 7}, (_, i) => document.getElementById(`joint${i}-input`));
+        const actuals = Array.from({length: 7}, (_, i) => document.getElementById(`joint${i}-actual`));
+
+        // Update input when slider changes
+        sliders.forEach((slider, i) => {
+            slider.oninput = () => {
+                inputs[i].value = slider.value;
+            };
+        });
+
+        // Update slider when input changes
+        inputs.forEach((input, i) => {
+            input.onchange = () => {
+                let value = parseFloat(input.value);
+                value = Math.min(Math.max(value, -1), 1);  // Clamp between -1 and 1
+                input.value = value;
+                sliders[i].value = value;
+            };
+        });
+
+        async function updateEnv() {
+            const formData = new FormData();
+            sliders.forEach((slider, i) => {
+                formData.append(`joint${i}`, slider.value);
+            });
+
+            const response = await fetch('/step', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            
+            document.getElementById('env-render').src = data.image;
+            document.getElementById('reward').textContent = data.reward;
+            
+            // Update only actual values
+            data.actual_values.forEach((value, i) => {
+                actuals[i].textContent = value.toFixed(3);
+            });
+        }
+
+        async function resetEnv() {
+            const response = await fetch('/reset', {
+                method: 'POST'
+            });
+            const data = await response.json();
+            
+            document.getElementById('env-render').src = data.image;
+            document.getElementById('reward').textContent = data.reward;
+            
+            // Reset all sliders to 0
+            sliders.forEach((slider, i) => {
+                slider.value = 0;
+                inputs[i].value = "0";
+                actuals[i].textContent = "Actual: 0.00";
+            });
+        }
+
+        function showNotification(message, duration = 3000) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, duration);
+        }
+
+        async function saveStateWithName() {
+            const suffix = prompt("Enter a name for this state (optional):", "");
+            if (suffix === null) return;  // User cancelled
+            
+            const formData = new FormData();
+            formData.append('suffix', suffix);
+
+            const response = await fetch('/save_state', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                updateStateList();
+                showNotification('State saved successfully');  // Replace alert with notification
+            }
+        }
+
+        async function loadState() {
+            const select = document.getElementById('stateSelect');
+            if (!select.value) {
+                showNotification('Please select a state to load', 3000);
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('filename', select.value);
+
+            const response = await fetch('/load_state', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                document.getElementById('env-render').src = data.image;
+                
+                // Update sliders to match loaded state
+                data.current_action.forEach((value, i) => {
+                    const slider = document.getElementById(`joint${i}`);
+                    const input = document.getElementById(`joint${i}-input`);
+                    slider.value = value;
+                    input.value = value;
+                });
+                
+                showNotification('State loaded successfully');
+            } else {
+                showNotification('Error loading state: ' + data.message, 4000);
+            }
+        }
+
+        async function updateStateList() {
+            const response = await fetch('/get_saved_states');
+            const data = await response.json();
+            
+            const select = document.getElementById('stateSelect');
+            // Clear existing options except the first one
+            while (select.options.length > 1) {
+                select.remove(1);
+            }
+            
+            // Add new options
+            data.files.forEach(file => {
+                const option = document.createElement('option');
+                option.value = file;
+                // Format the display name
+                const match = file.match(/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})_?(.*)\.(json|yaml)/);
+                if (match) {
+                    const [_, year, month, day, hour, min, sec, suffix] = match;
+                    const date = `${year}-${month}-${day} ${hour}:${min}:${sec}`;
+                    option.text = suffix ? `${date} - ${suffix}` : date;
+                } else {
+                    option.text = file;
+                }
+                select.add(option);
+            });
+        }
+
+        async function uploadState() {
+            const fileInput = document.getElementById('stateFileInput');
+            const file = fileInput.files[0];
+            if (!file) {
+                showNotification('Please select a file to upload', 3000);
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch('/upload_state', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                updateStateList();
+                showNotification('State file uploaded successfully');
+            } else {
+                showNotification('Error uploading state file: ' + data.message, 4000);
+            }
+        }
+
+        // Start periodic updates
+        updateInterval = setInterval(updateEnv, 100);  // Update every 100ms
+
+        // Initial reset
+        resetEnv();
+
+        // Initial state list update
+        updateStateList();
+    </script>
+</body>
+</html>
